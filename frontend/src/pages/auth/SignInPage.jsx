@@ -25,7 +25,7 @@ export const SignInPage = () => {
     try {
       setSubmitting(true);
       await signIn(loginId, password);
-      navigate('/employees');
+      navigate('/dashboard');
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || 'Invalid credentials or login failed.');

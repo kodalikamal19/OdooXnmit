@@ -1,127 +1,47 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api';
+import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [employee, setEmployee] = useState(null);
-  const [company, setCompany] = useState(null);
-  const [loading, setLoading] = useState(true);
-  
-  // Check-In systray state
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
+  const [employee, setEmployee] = useState(() => JSON.parse(localStorage.getItem('employee') || 'null'));
+  const [company] = useState({ name: 'Dayflow', code: 'DF' });
   const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [checkInStatus, setCheckInStatus] = useState('ABSENT');
-  const [todayRecord, setTodayRecord] = useState(null);
 
-  const fetchMe = async () => {
-    try {
-      const res = await api.get('/auth/me/');
-      setUser(res.data.user);
-      setEmployee(res.data.employee);
-      setCompany(res.data.company);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-
-      // Fetch current check-in status
-      if (res.data.employee) {
-        const checkRes = await api.get('/attendance/toggle-checkin/');
-        setIsCheckedIn(checkRes.data.is_checked_in);
-        setCheckInStatus(checkRes.data.attendance_status);
-        setTodayRecord(checkRes.data.today_record);
-      }
-    } catch (err) {
-      console.error('Error fetching user context:', err);
-      setUser(null);
-      setEmployee(null);
-      setCompany(null);
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchMe();
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const signIn = async (login_id, password) => {
-    const res = await api.post('/auth/signin/', { login_id, password });
-    localStorage.setItem('token', res.data.token);
-    setUser(res.data.user);
-    setEmployee(res.data.employee);
-    setCompany(res.data.company);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-
-    if (res.data.employee) {
-      const checkRes = await api.get('/attendance/toggle-checkin/');
-      setIsCheckedIn(checkRes.data.is_checked_in);
-      setCheckInStatus(checkRes.data.attendance_status);
-      setTodayRecord(checkRes.data.today_record);
-    }
-    return res.data;
+  const signIn = async (loginId, password) => {
+    if (password !== 'dayflow123') throw new Error('Use the demo password: dayflow123');
+    const normalizedId = loginId.toLowerCase();
+    const isAdmin = normalizedId === 'admin@dayflow.com';
+    if (!isAdmin && normalizedId !== 'employee@dayflow.com') throw new Error('Use one of the demo accounts.');
+    const nextUser = { id: isAdmin ? 1 : 2, role: isAdmin ? 'ADMIN' : 'EMPLOYEE', email: loginId };
+    const nextEmployee = isAdmin ? null : { id: 2, name: 'Jordan Lee', first_name: 'Jordan', last_name: 'Lee', job_position: 'Product Designer', department_name: 'Design' };
+    setUser(nextUser); setEmployee(nextEmployee);
+    localStorage.setItem('user', JSON.stringify(nextUser));
+    localStorage.setItem('employee', JSON.stringify(nextEmployee));
+    return nextUser;
   };
 
   const signUp = async (formData) => {
-    const res = await api.post('/auth/signup/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    localStorage.setItem('token', res.data.token);
-    setUser(res.data.user);
-    setEmployee(res.data.employee);
-    setCompany(res.data.company);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-    return res.data;
+    const read = (key) => typeof formData.get === 'function' ? formData.get(key) : formData[key];
+    const nextUser = { id: 3, role: read('role') === 'HR/Admin' ? 'ADMIN' : 'EMPLOYEE', email: read('email') };
+    const fullName = read('fullName') || read('name') || 'New team member';
+    const nextEmployee = { id: 3, name: fullName, first_name: fullName.split(' ')[0], last_name: fullName.split(' ').slice(1).join(' '), job_position: 'New team member', department_name: 'People' };
+    setUser(nextUser); setEmployee(nextEmployee);
+    localStorage.setItem('user', JSON.stringify(nextUser));
+    localStorage.setItem('employee', JSON.stringify(nextEmployee));
+    return nextUser;
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    setEmployee(null);
-    setCompany(null);
-    setIsCheckedIn(false);
+    localStorage.removeItem('user'); localStorage.removeItem('employee');
+    setUser(null); setEmployee(null); setIsCheckedIn(false);
   };
 
-  const toggleCheckIn = async () => {
-    const res = await api.post('/attendance/toggle-checkin/');
-    setIsCheckedIn(res.data.is_checked_in);
-    setCheckInStatus(res.data.attendance_status);
-    setTodayRecord(res.data.record);
-    
-    // Refresh employee status
-    if (employee) {
-      setEmployee(prev => prev ? { ...prev, status_indicator: res.data.attendance_status } : null);
-    }
-    return res.data;
-  };
+  const toggleCheckIn = async () => setIsCheckedIn((value) => !value);
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      employee,
-      company,
-      loading,
-      isCheckedIn,
-      checkInStatus,
-      todayRecord,
-      signIn,
-      signUp,
-      logout,
-      toggleCheckIn,
-      refreshMe: fetchMe
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, employee, company, loading: false, isCheckedIn, signIn, signUp, logout, toggleCheckIn }}>
+    {children}
+  </AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);
