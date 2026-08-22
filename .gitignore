@@ -1,0 +1,48 @@
+# Virtual environment
+venv/
+env/
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+db.sqlite3
+*.sqlite3
+
+# Django
+staticfiles/
+media/
+
+# Node
+node_modules/
+dist/
+build/
+.cache/
+
+# Vite
+.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Environment (NEVER commit real .env)
+.env
+.env.local
+.env.production
+backend/.env
+frontend/.env
