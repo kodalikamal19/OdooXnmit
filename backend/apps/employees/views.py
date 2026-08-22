@@ -260,7 +260,12 @@ class EmployeeListView(APIView):
 
         emp_doc["_id"] = emp_id
         emp_doc["user_id"] = user_result.inserted_id
-        return Response(serialize_employee(emp_doc), status=status.HTTP_201_CREATED)
+        
+        # Add generated password to the response so the frontend can display it
+        response_data = serialize_employee(emp_doc)
+        response_data["generated_password"] = plain_password
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 def _create_default_allocations(employee_id, company_id):
@@ -313,7 +318,7 @@ OdooXnmit HR Team
             message=message,
             from_email=django_settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
-            fail_silently=True,
+            fail_silently=False,
         )
     except Exception as e:
         print(f"[Email Error] Failed to send credentials to {email}: {e}")

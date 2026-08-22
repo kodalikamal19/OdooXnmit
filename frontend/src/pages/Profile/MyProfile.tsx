@@ -125,8 +125,12 @@ export default function MyProfile() {
                 <div className="card-header" style={{ padding: '0 24px' }}>
                   <div className="nav-tabs">
                     <button className={`nav-tab ${tab === 'info' ? 'active' : ''}`} onClick={() => setTab('info')}>Basic Info</button>
-                    <button className={`nav-tab ${tab === 'private' ? 'active' : ''}`} onClick={() => setTab('private')}>Private Info</button>
-                    <button className={`nav-tab ${tab === 'resume' ? 'active' : ''}`} onClick={() => setTab('resume')}>Resume</button>
+                    {employee && (
+                      <>
+                        <button className={`nav-tab ${tab === 'private' ? 'active' : ''}`} onClick={() => setTab('private')}>Private Info</button>
+                        <button className={`nav-tab ${tab === 'resume' ? 'active' : ''}`} onClick={() => setTab('resume')}>Resume</button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -143,6 +147,18 @@ export default function MyProfile() {
                       <InfoRow label="Date of Joining" value={employee.date_of_joining} />
                       <InfoRow label="Employee Code" value={employee.employee_code} />
                       <InfoRow label="Login ID" value={employee.login_id} />
+                    </div>
+                  )}
+
+                  {tab === 'info' && !employee && (
+                    <div>
+                      <InfoRow label="Full Name" value={user?.name} />
+                      <InfoRow label="Email" value={user?.email} />
+                      <InfoRow label="Phone" value={user?.phone} />
+                      <InfoRow label="Role" value={user?.role} />
+                      <div style={{ marginTop: 16, padding: '12px', background: 'var(--gray-50)', borderRadius: 8, fontSize: 13, color: 'var(--gray-500)' }}>
+                        You are logged in as a company administrator. Admin accounts do not have an associated employee profile (Private Info, Resume, Bank Details).
+                      </div>
                     </div>
                   )}
 

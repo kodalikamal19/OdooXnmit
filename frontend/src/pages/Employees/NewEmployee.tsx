@@ -56,7 +56,10 @@ export default function NewEmployee() {
 
     try {
       const res = await employeeApi.create(fd);
-      toast.success(`Employee created! Login ID: ${res.data.login_id}`);
+      toast.success(
+        `Employee created!\nLogin ID: ${res.data.login_id}\nPassword: ${res.data.generated_password}`,
+        { duration: 10000 }
+      );
       navigate(`/employees/${res.data.id}`);
     } catch (err: any) {
       const data = err.response?.data;
